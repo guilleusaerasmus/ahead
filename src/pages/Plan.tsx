@@ -26,11 +26,11 @@ export function Plan() {
         <h2>Hair card</h2>
         {p ? (
           <dl class="spec">
-            {p.hairHex && (
+            {(p.hairSampledHex || p.hairHex) && (
               <>
                 <dt>Colour</dt>
                 <dd>
-                  <Swatch hex={p.hairHex} label="Hair colour" /> {p.hairColorName} ({p.hairHex})
+                  <Swatch hex={(p.hairSampledHex ?? p.hairHex)!} label="Hair colour" /> {p.hairColorName} ({p.hairSampledHex ?? p.hairHex})
                 </dd>
               </>
             )}

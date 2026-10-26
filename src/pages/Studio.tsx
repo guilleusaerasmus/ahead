@@ -88,7 +88,8 @@ export function Studio() {
 
   const shortOnes = templates.filter((t) => SHORT.test(`${t.title ?? ''} ${t.category_name ?? ''}`));
   const pencil = p?.browHex ? browPencil(p.browHex) : undefined;
-  const colours = p?.hairHex ? [{ hex: p.hairHex, label: 'Your colour' }, { hex: mix(p.hairHex, '#ffffff', 0.15), label: 'Yours, a shade lighter' }, ...COLORS] : COLORS;
+  const ownHex = p?.hairSampledHex ?? p?.hairHex;
+  const colours = ownHex ? [{ hex: ownHex, label: 'Your colour' }, { hex: mix(ownHex, '#ffffff', 0.15), label: 'Yours, a shade lighter' }, ...COLORS] : COLORS;
 
   return (
     <div class="stack">

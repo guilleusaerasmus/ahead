@@ -49,5 +49,8 @@ export async function preparePhoto(file: Blob, maxLong: number, minShort: number
 /** Head-and-shoulders photo used for hair, headwear and brow try-ons (hairstyle API: long side ≤ 1024, JPEG). */
 export const preparePortrait = (file: Blob) => preparePhoto(file, 1024, 512);
 
+/** Head tilted ~45° down for hair density (YouCam resizes the long side to 1080 for this analysis). */
+export const prepareHairline = (file: Blob) => preparePhoto(file, 1600, 300);
+
 /** Close-up face photo used for skin and colour analysis (SD skin analysis needs a short side ≥ 480). */
 export const prepareCloseUp = (file: Blob) => preparePhoto(file, 1900, 480);

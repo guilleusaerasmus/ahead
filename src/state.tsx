@@ -4,6 +4,8 @@ import type { ComponentChildren } from 'preact';
 import * as store from './lib/store';
 import type { CheckIn, HairProfile } from './lib/guidance';
 
+export type PhotoSlot = 'portrait' | 'closeup' | 'hairline';
+
 export type LookKind = 'wig' | 'short' | 'color' | 'hat' | 'brows';
 
 export interface Look {
@@ -21,6 +23,8 @@ export interface AppData {
   consentAt?: string;
   portraitKey?: string;
   closeupKey?: string;
+  /** Head tilted ~45° down so the hairline and parting show; used for hair density. */
+  hairlineKey?: string;
   profile?: HairProfile;
   looks: Look[];
   checkins: CheckIn[];
@@ -30,7 +34,7 @@ interface Ctx {
   data: AppData;
   ready: boolean;
   setConsent: () => Promise<void>;
-  savePhoto: (slot: 'portrait' | 'closeup', blob: Blob) => Promise<void>;
+  savePhoto: (slot: PhotoSlot, blob: Blob) => Promise<void>;
   saveProfile: (p: HairProfile) => Promise<void>;
   addLook: (look: Omit<Look, 'id' | 'at' | 'favorite' | 'imageKey'>, image: Blob) => Promise<void>;
   toggleFavorite: (id: string) => Promise<void>;
@@ -73,15 +77,16 @@ export function AppProvider({ children }: { children: ComponentChildren }) {
 
   useEffect(() => {
     (async () => {
-      const [consentAt, portraitKey, closeupKey, profile, looks, checkins] = await Promise.all([
+      const [consentAt, portraitKey, closeupKey, hairlineKey, profile, looks, checkins] = await Promise.all([
         store.get<string>('kv', 'consentAt'),
         store.get<string>('kv', 'portraitKey'),
         store.get<string>('kv', 'closeupKey'),
+        store.get<string>('kv', 'hairlineKey'),
         store.get<HairProfile>('kv', 'profile'),
         store.get<Look[]>('kv', 'looks'),
         store.all<CheckIn>('checkins'),
       ]);
-      setData({ consentAt, portraitKey, closeupKey, profile, looks: looks ?? [], checkins: checkins.sort((a, b) => a.at.localeCompare(b.at)) });
+      setData({ consentAt, portraitKey, closeupKey, hairlineKey, profile, looks: looks ?? [], checkins: checkins.sort((a, b) => a.at.localeCompare(b.at)) });
       setReady(true);
     })().catch(() => setReady(true));
   }, []);
@@ -92,10 +97,10 @@ export function AppProvider({ children }: { children: ComponentChildren }) {
     setData((d) => ({ ...d, consentAt: at }));
   }, []);
 
-  const savePhoto = useCallback(async (slot: 'portrait' | 'closeup', blob: Blob) => {
+  const savePhoto = useCallback(async (slot: PhotoSlot, blob: Blob) => {
     const key = `${slot}-${store.newId()}`;
     await store.put('images', key, blob);
-    const kvKey = slot === 'portrait' ? 'portraitKey' : 'closeupKey';
+    const kvKey = `${slot}Key` as const;
     const previous = await store.get<string>('kv', kvKey);
     await store.put('kv', kvKey, key);
     if (previous) await store.del('images', previous);

@@ -1,4 +1,4 @@
-import { ApiError } from './api';
+import { ApiError, type Feature } from './api';
 import { PhotoError } from './image';
 
 // YouCam error codes (see the API docs' "File Specs & Errors") mapped to advice a tired person can act on.
@@ -30,10 +30,18 @@ const MESSAGES: Record<string, string> = {
   upload_failed: 'The photo did not upload. Please try again.',
 };
 
-export function friendlyError(e: unknown): string {
+// The hair-density analysis wants the head tilted down, so pose errors need the opposite advice.
+const HAIRLINE_MESSAGES: Record<string, string> = {
+  error_face_angle_invalid: 'For the hairline photo, face the camera and tilt your head down about 45° so your parting shows.',
+  error_pose: 'For the hairline photo, face the camera and tilt your head down about 45° so your parting shows.',
+  error_face_position_invalid: 'Keep your whole face and hairline inside the photo.',
+};
+
+export function friendlyError(e: unknown, feature?: Feature): string {
   if (e instanceof PhotoError) return e.message;
   if (e instanceof ApiError) {
     if (e.code === 'cancelled') return '';
+    if (feature === 'hair-density' && HAIRLINE_MESSAGES[e.code]) return HAIRLINE_MESSAGES[e.code];
     if (e.status === 429 && !MESSAGES[e.code]) return 'The service is busy. Please wait a minute and try again.';
     return MESSAGES[e.code] ?? 'Something went wrong on our side. Please try again in a moment.';
   }

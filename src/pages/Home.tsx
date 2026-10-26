@@ -3,7 +3,7 @@ import { SOURCES } from '../lib/guidance';
 
 export function Home() {
   const { data } = useApp();
-  const started = Boolean(data.consentAt && data.portraitKey && data.closeupKey);
+  const started = Boolean(data.consentAt && data.portraitKey && data.closeupKey && data.hairlineKey);
   return (
     <div class="stack">
       <section>

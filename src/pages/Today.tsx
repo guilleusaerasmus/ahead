@@ -5,6 +5,7 @@ import { analyze, readDensity, readLength, readTone } from '../lib/run';
 import { friendlyError } from '../lib/errors';
 import { browPencil, wigDensity, wigLength, SOURCES, type HairProfile } from '../lib/guidance';
 import { newId } from '../lib/store';
+import { HairShade } from './HairShade';
 
 type Step = 'tone' | 'length' | 'density';
 const LABELS: Record<Step, string> = {
@@ -21,7 +22,7 @@ export function Today() {
   const p = data.profile;
 
   const measure = async () => {
-    if (!data.portraitKey || !data.closeupKey) return;
+    if (!data.portraitKey || !data.closeupKey || !data.hairlineKey) return;
     setError(undefined);
     setSteps({ tone: 'run', length: 'run', density: 'run' });
     const profile: HairProfile = { measuredAt: new Date().toISOString() };
@@ -36,14 +37,14 @@ export function Today() {
         ({ results }) => ((profile.length = readLength(results)), mark('length', 'ok')),
         (e) => (errors.push(friendlyError(e)), mark('length', 'err')),
       ),
-      analyze('hair-density', data.portraitKey).then(
+      analyze('hair-density', data.hairlineKey).then(
         ({ results }) => {
           const d = readDensity(results);
           profile.density = d.density;
           profile.densityTerm = d.term;
           mark('density', 'ok');
         },
-        (e) => (errors.push(friendlyError(e)), mark('density', 'err')),
+        (e) => (errors.push(friendlyError(e, 'hair-density')), mark('density', 'err')),
       ),
     ];
     await Promise.all(jobs);
@@ -85,12 +86,13 @@ export function Today() {
             <p class="eyebrow">Take this to your wig fitter</p>
             <h2 id="spec-title">Your hair card</h2>
             <dl class="spec">
-              {p.hairHex && (
+              {(p.hairSampledHex || p.hairHex) && (
                 <>
                   <dt>Colour</dt>
                   <dd>
-                    <Swatch hex={p.hairHex} label="Hair colour" />
-                    {p.hairColorName ?? 'Measured'} <span class="muted small">{p.hairHex}</span>
+                    <Swatch hex={p.hairSampledHex ?? p.hairHex!} label="Hair colour" />
+                    {p.hairColorName ?? 'Your shade'}
+                    <span class="muted small">{p.hairSampledHex ? `exact shade ${p.hairSampledHex}` : 'colour family; pick your exact shade below'}</span>
                   </dd>
                 </>
               )}
@@ -134,6 +136,14 @@ export function Today() {
               the wig in daylight to confirm.
             </p>
           </section>
+
+          {data.portraitKey && (
+            <section class="card stack">
+              <h3>Pick your exact shade</h3>
+              <p class="muted">The analysis gives a colour family. Wigs come in many shades within it, so tap your hair to record yours.</p>
+              <HairShade photoKey={data.portraitKey} value={p.hairSampledHex} onPick={(hex) => void saveProfile({ ...p, hairSampledHex: hex })} />
+            </section>
+          )}
 
           <section class="grid grid-2">
             <div class="card">

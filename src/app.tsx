@@ -46,7 +46,7 @@ function Shell() {
   }, [path, route.title]);
 
   // Steps after the start page need consent and photos first.
-  const needsSetup = ready && route.nav && (!data.consentAt || !data.portraitKey || !data.closeupKey);
+  const needsSetup = ready && route.nav && (!data.consentAt || !data.portraitKey || !data.closeupKey || !data.hairlineKey);
   const View = needsSetup ? Start : route.view;
 
   return (

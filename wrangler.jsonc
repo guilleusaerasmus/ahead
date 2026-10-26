@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "ahead",
   "main": "worker/index.ts",
-  "compatibility_date": "2026-10-01",
+  "compatibility_date": "2025-10-11",
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",

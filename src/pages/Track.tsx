@@ -3,25 +3,25 @@ import { useApp } from '../state';
 import { ErrorNote, PhotoPicker, Progress, useBlobUrl, type StepState } from '../components';
 import { analyze, readDensity, readSkin } from '../lib/run';
 import { friendlyError } from '../lib/errors';
-import { prepareCloseUp, preparePortrait } from '../lib/image';
+import { prepareCloseUp, prepareHairline } from '../lib/image';
 import * as store from '../lib/store';
 import { CARE_TIPS, CONCERN_LABEL, MEANINGFUL_CHANGE, SOURCES, skinTrends, type CheckIn, type SkinConcern } from '../lib/guidance';
 
 export function Track() {
   const { data, addCheckIn } = useApp();
-  const [portrait, setPortrait] = useState<Blob>();
+  const [hairline, setHairline] = useState<Blob>();
   const [closeup, setCloseup] = useState<Blob>();
   const [steps, setSteps] = useState<{ skin: StepState; density: StepState }>({ skin: 'idle', density: 'idle' });
   const [error, setError] = useState<string>();
   const running = steps.skin === 'run' || steps.density === 'run';
-  const portraitUrl = useBlobUrl(portrait);
+  const hairlineUrl = useBlobUrl(hairline);
   const closeupUrl = useBlobUrl(closeup);
 
-  const prepare = (kind: 'portrait' | 'closeup') => async (file: File) => {
+  const prepare = (kind: 'hairline' | 'closeup') => async (file: File) => {
     setError(undefined);
     try {
-      const p = kind === 'portrait' ? await preparePortrait(file) : await prepareCloseUp(file);
-      if (kind === 'portrait') setPortrait(p.blob);
+      const p = kind === 'hairline' ? await prepareHairline(file) : await prepareCloseUp(file);
+      if (kind === 'hairline') setHairline(p.blob);
       else setCloseup(p.blob);
     } catch (e) {
       setError(friendlyError(e));
@@ -29,7 +29,7 @@ export function Track() {
   };
 
   const checkIn = async () => {
-    if (!portrait && !closeup) return;
+    if (!hairline && !closeup) return;
     setError(undefined);
     const entry: CheckIn = { id: store.newId(), at: new Date().toISOString() };
     const errors: string[] = [];
@@ -41,7 +41,7 @@ export function Track() {
       tmp.push(key);
       return key;
     };
-    setSteps({ skin: closeup ? 'run' : 'idle', density: portrait ? 'run' : 'idle' });
+    setSteps({ skin: closeup ? 'run' : 'idle', density: hairline ? 'run' : 'idle' });
     const jobs: Array<Promise<void>> = [];
     if (closeup) {
       const key = await stash(closeup);
@@ -58,8 +58,8 @@ export function Track() {
         ),
       );
     }
-    if (portrait) {
-      const key = await stash(portrait);
+    if (hairline) {
+      const key = await stash(hairline);
       jobs.push(
         analyze('hair-density', key).then(
           ({ results }) => {
@@ -69,7 +69,7 @@ export function Track() {
             setSteps((s) => ({ ...s, density: 'ok' }));
           },
           (e) => {
-            errors.push(friendlyError(e));
+            errors.push(friendlyError(e, 'hair-density'));
             setSteps((s) => ({ ...s, density: 'err' }));
           },
         ),
@@ -80,13 +80,13 @@ export function Track() {
     if (errors.length) setError([...new Set(errors)].join(' '));
     if (entry.skin || entry.density !== undefined) {
       await addCheckIn(entry);
-      setPortrait(undefined);
+      setHairline(undefined);
       setCloseup(undefined);
     }
   };
 
   const trends = skinTrends(data.checkins);
-  const worst = [...trends].sort((a, b) => a.change - b.change)[0];
+  const worst = [...trends].sort((a, b) => a.change - b.change).find((t) => t.change <= -MEANINGFUL_CHANGE);
   const densityPoints = data.checkins.filter((c) => c.density !== undefined);
 
   return (
@@ -96,7 +96,7 @@ export function Track() {
       <p class="lede">Same place, same light, once a week. Ahead follows your hair density and how your skin is doing.</p>
 
       <div class="grid grid-2">
-        <PhotoPicker label="Head and shoulders" hint="For hair density." preview={portraitUrl} busy={running} onPick={prepare('portrait')} />
+        <PhotoPicker label="Your hairline" hint="Tilt your head down about 45° so your parting shows. For hair density." preview={hairlineUrl} busy={running} onPick={prepare('hairline')} />
         <PhotoPicker label="Close-up of your face" hint="For hydration, redness, smoothness and radiance." preview={closeupUrl} busy={running} onPick={prepare('closeup')} />
       </div>
       <div class="card stack">
@@ -106,7 +106,7 @@ export function Track() {
             { label: 'Skin', state: steps.skin },
           ]}
         />
-        <button class="btn btn-primary" onClick={checkIn} disabled={running || (!portrait && !closeup)}>
+        <button class="btn btn-primary" onClick={checkIn} disabled={running || (!hairline && !closeup)}>
           {running ? 'Analysing…' : 'Save this week’s check-in'}
         </button>
         <p class="muted small">Check-in photos are analysed and then deleted, here and on YouCam. Only the numbers are kept.</p>
@@ -152,16 +152,18 @@ export function Track() {
                     <td>{t.last}</td>
                     <td>
                       {t.change > 0 ? '+' : ''}
-                      {t.change.toFixed(1)}
+                      {t.change.toFixed(1)}{' '}
+                      <span class="muted small">
+                        {Math.abs(t.change) < MEANINGFUL_CHANGE ? '· within normal photo variation' : t.change < 0 ? '· noticeably lower' : '· noticeably higher'}
+                      </span>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
             <p class="muted small">
-              Scores are YouCam’s raw scores (1–100, higher looks healthier). Photos taken in different light vary, so small changes may
-              just be noise
-              {MEANINGFUL_CHANGE !== null ? `; we only flag changes larger than ${MEANINGFUL_CHANGE} points` : ''}.
+              Scores are YouCam’s raw scores (1–100, higher looks healthier). The same face photographed in different light or framing moves
+              by up to about 3 points, so we only call a change noticeable when it is larger than {MEANINGFUL_CHANGE} points.
             </p>
             {worst && <CareTips concern={worst.concern} />}
           </>

@@ -49,7 +49,7 @@ A wig looks like *you* when it matches your colour, your length and how full you
 
 - **Honest numbers.**
   - YouCam's documentation says `ui_score` is adjusted upwards to make people feel better. Ahead tracks `raw_score` instead.
-  - A change is only called meaningful above the measured test–retest noise of the analysis: several photos of the same face in one session.
+  - A change is only called noticeable above the measured noise of the analysis. Six versions of the same face photo (brighter, darker, warmer, cropped, heavier JPEG) moved the raw scores by at most 2.6 points (standard deviation ≤ 0.97). The 95 % threshold for a difference between two check-ins is about 2.7 points. Real photos also vary in pose and expression, so Ahead uses 5.
 - **Not medical.**
   - Ahead never diagnoses or recommends treatment.
   - Every tip links to its source.

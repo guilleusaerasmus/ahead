@@ -1,23 +1,24 @@
 import { useState } from 'preact/hooks';
-import { useApp, useImage } from '../state';
+import { useApp, useImage, type PhotoSlot } from '../state';
 import { PhotoPicker, ErrorNote } from '../components';
-import { prepareCloseUp, preparePortrait } from '../lib/image';
+import { prepareCloseUp, prepareHairline, preparePortrait } from '../lib/image';
 import { friendlyError } from '../lib/errors';
 
 export function Start() {
   const { data, setConsent, savePhoto } = useApp();
   const [adult, setAdult] = useState(Boolean(data.consentAt));
   const [agree, setAgree] = useState(Boolean(data.consentAt));
-  const [busy, setBusy] = useState<'portrait' | 'closeup' | null>(null);
+  const [busy, setBusy] = useState<PhotoSlot | null>(null);
   const [error, setError] = useState<string>();
   const portrait = useImage(data.portraitKey);
   const closeup = useImage(data.closeupKey);
+  const hairline = useImage(data.hairlineKey);
 
-  const pick = (slot: 'portrait' | 'closeup') => async (file: File) => {
+  const pick = (slot: PhotoSlot) => async (file: File) => {
     setError(undefined);
     setBusy(slot);
     try {
-      const photo = slot === 'portrait' ? await preparePortrait(file) : await prepareCloseUp(file);
+      const photo = slot === 'portrait' ? await preparePortrait(file) : slot === 'closeup' ? await prepareCloseUp(file) : await prepareHairline(file);
       await savePhoto(slot, photo.blob);
     } catch (e) {
       setError(friendlyError(e));
@@ -65,11 +66,11 @@ export function Start() {
     );
   }
 
-  const ready = Boolean(data.portraitKey && data.closeupKey);
+  const ready = Boolean(data.portraitKey && data.closeupKey && data.hairlineKey);
   return (
     <div class="stack">
       <p class="eyebrow">Step 1 of 3</p>
-      <h1>Two photos</h1>
+      <h1>Three photos</h1>
       <p class="lede">Daylight from a window works best. No hat, glasses off, hair as you usually wear it.</p>
       <ErrorNote message={error} />
       <div class="grid grid-2">
@@ -87,13 +88,20 @@ export function Start() {
           busy={busy !== null}
           onPick={pick('closeup')}
         />
+        <PhotoPicker
+          label="Your hairline"
+          hint={<>Face the camera, then tilt your head down about 45° so your parting and hairline show. Hair loose. Used to measure how full your hair is.</>}
+          preview={hairline}
+          busy={busy !== null}
+          onPick={pick('hairline')}
+        />
       </div>
       {busy && <p class="muted">Preparing photo…</p>}
       <div class="row">
         <a class={`btn btn-primary`} href="#/today" aria-disabled={!ready} onClick={(e) => !ready && e.preventDefault()}>
           Measure my hair
         </a>
-        {!ready && <span class="muted small">Add both photos to continue.</span>}
+        {!ready && <span class="muted small">Add all three photos to continue.</span>}
       </div>
     </div>
   );

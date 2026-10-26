@@ -68,7 +68,10 @@ export function browPencil(browHex: string): { hex: string; name: string } {
 export interface HairProfile {
   measuredAt: string;
   hairColorName?: string;
+  /** YouCam's hair colour family (one of a few fixed values). */
   hairHex?: string;
+  /** The exact shade the user picked by tapping their hair in the photo. */
+  hairSampledHex?: string;
   browHex?: string;
   skinHex?: string;
   eyeColorName?: string;
@@ -174,9 +177,10 @@ export function skinTrends(checkins: CheckIn[]): Trend[] {
 }
 
 /**
- * YouCam's analysis has measurement noise (light, angle, distance). We only call a change
- * meaningful when it is larger than this many raw-score points. Must be set from a test–retest
- * run (several photos of the same face, same session) once the API key is available; until
- * then the app shows raw numbers without calling any change meaningful.
+ * YouCam's skin scores move a little when only the photo changes. Measured on 26 Oct 2026: six
+ * versions of one face (brighter, darker, warmer, cropped, heavier JPEG) gave a standard deviation
+ * of at most 0.97 raw points (moisture; redness 0.89, radiance 0.27, texture 0.04). For a change
+ * between two check-ins the 95 % noise threshold is 1.96·√2·σ ≈ 2.7 points. Real photos also vary
+ * in pose and expression, so we use about twice that before calling a change noticeable.
  */
-export const MEANINGFUL_CHANGE: number | null = null;
+export const MEANINGFUL_CHANGE = 5;
