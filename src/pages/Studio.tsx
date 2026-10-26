@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'preact/hooks';
 import { useApp, useImage, type Look, type LookKind } from '../state';
-import { Compare, ErrorNote, Swatch, useBlobUrl } from '../components';
+import { Compare, ErrorNote, PhotoPicker, Swatch, useBlobUrl } from '../components';
 import { analyze } from '../lib/run';
-import { listHairTemplates, type HairTemplate } from '../lib/api';
+import { listHairTemplates, uploadPhoto, type HairTemplate } from '../lib/api';
+import { preparePhoto } from '../lib/image';
 import { friendlyError } from '../lib/errors';
 import { browPencil, mix } from '../lib/guidance';
 
@@ -14,12 +15,6 @@ const TABS: Array<{ id: Tab; label: string }> = [
   { id: 'hat', label: 'Hats' },
   { id: 'brows', label: 'Brows' },
 ];
-
-const HEADWEAR = [
-  { id: 'beanie', label: 'Soft knit beanie' },
-  { id: 'turban', label: 'Jersey turban' },
-  { id: 'bucket', label: 'Cotton bucket hat' },
-] as const;
 
 const COLORS = [
   { hex: '#2b1d16', label: 'Espresso' },
@@ -43,6 +38,8 @@ export function Studio() {
   const [error, setError] = useState<string>();
   const [result, setResult] = useState<{ blob: Blob; label: string }>();
   const [gender, setGender] = useState<'female' | 'male'>('female');
+  const [hat, setHat] = useState<Blob>();
+  const hatUrl = useBlobUrl(hat);
   const portrait = useImage(data.portraitKey);
   const resultUrl = useBlobUrl(result?.blob);
   const p = data.profile;
@@ -153,18 +150,34 @@ export function Studio() {
                 </label>
               ))}
             </fieldset>
-            <div class="tiles">
-              {HEADWEAR.map((h) => (
-                <button
-                  key={h.id}
-                  class="tile"
-                  disabled={Boolean(busy)}
-                  onClick={() => run('hat', h.label, () => analyze('hat', portraitKey, { item: h.id, gender }), { Headwear: h.label })}
-                >
-                  <img src={`/headwear/${h.id}.jpg`} alt="" />
-                  <span>{h.label}</span>
-                </button>
-              ))}
+            <PhotoPicker
+              label="Photo of the hat or scarf"
+              hint="Photograph one you own or like in a shop, laid flat or on a stand, or save a product photo. The whole item should be visible."
+              preview={hatUrl}
+              busy={Boolean(busy)}
+              capture="environment"
+              onPick={async (file) => {
+                setError(undefined);
+                try {
+                  setHat((await preparePhoto(file, 1600, 512)).blob);
+                } catch (e) {
+                  setError(friendlyError(e));
+                }
+              }}
+            />
+            <div>
+              <button
+                class="btn btn-primary"
+                disabled={!hat || Boolean(busy)}
+                onClick={() =>
+                  hat &&
+                  run('hat', 'Your headwear', async () => analyze('hat', portraitKey, { ref_file_id: await uploadPhoto(hat), gender }), {
+                    Headwear: 'Photographed item',
+                  })
+                }
+              >
+                Try it on
+              </button>
             </div>
           </>
         )}

@@ -1,4 +1,4 @@
-import { BadRequest, FEATURES, HEADWEAR, type Json } from './features';
+import { BadRequest, FEATURES, type Json } from './features';
 
 export interface Env {
   YOUCAM_API_KEY: string;
@@ -96,21 +96,6 @@ async function createUploadSlot(env: Env, contentType: string, size: number): Pr
   return { file_id: file.file_id, url: req.url, headers: req.headers };
 }
 
-/** Uploads one of our own headwear product photos once and caches its file id (YouCam keeps files 30 days). */
-async function headwearFileId(env: Env, request: Request, item: string): Promise<string> {
-  const cacheKey = `headwear:${item}`;
-  const cached = await env.USAGE.get(cacheKey);
-  if (cached) return cached;
-  const asset = await env.ASSETS.fetch(new Request(new URL(`/headwear/${item}.jpg`, request.url)));
-  if (!asset.ok) throw new HttpError(500, 'headwear_asset_missing');
-  const bytes = await asset.arrayBuffer();
-  const slot = await createUploadSlot(env, 'image/jpeg', bytes.byteLength);
-  const put = await fetch(slot.url, { method: 'PUT', headers: slot.headers, body: bytes });
-  if (!put.ok) throw new HttpError(502, 'headwear_upload_failed');
-  await env.USAGE.put(cacheKey, slot.file_id, { expirationTtl: 60 * 60 * 24 * 25 });
-  return slot.file_id;
-}
-
 async function readJson(request: Request): Promise<Json> {
   try {
     const body = await request.json();
@@ -168,12 +153,9 @@ async function handleApi(request: Request, env: Env, path: string[]): Promise<Re
   // POST /api/task/:feature -> create
   if (request.method === 'POST' && path.length === 2) {
     const input = await readJson(request);
-    delete input.ref_file_id; // server-controlled
-    if (feature === 'hat') {
-      const item = input.item;
-      if (typeof item !== 'string' || !(HEADWEAR as readonly string[]).includes(item)) throw new HttpError(400, 'Invalid item');
-      input.ref_file_id = await headwearFileId(env, request, item);
-    }
+    // For the hat feature `ref_file_id` is a headwear photo the visitor uploaded through /api/file
+    // (a YouCam file id, never a URL); no other feature accepts a reference file.
+    if (feature !== 'hat') delete input.ref_file_id;
     let body: Json;
     try {
       body = spec.body(input);

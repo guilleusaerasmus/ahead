@@ -49,9 +49,6 @@ function oneOf<T extends string>(input: Json, key: string, allowed: readonly T[]
 /** Skin concerns tracked during treatment: dryness, redness, texture and dullness. 4 concerns = 9 units (SD). */
 export const SKIN_ACTIONS = ['moisture', 'redness', 'texture', 'radiance'] as const;
 
-/** Headwear images served by this app (same origin), so the hat task never fetches arbitrary URLs. */
-export const HEADWEAR = ['beanie', 'turban', 'bucket'] as const;
-
 export const FEATURES: Record<string, Feature> = {
     skin: {
       run: '/s2s/v2.0/task/skin-analysis',
@@ -101,7 +98,7 @@ export const FEATURES: Record<string, Feature> = {
       run: '/s2s/v2.0/task/hat',
       poll: '/s2s/v2.0/task/hat/',
       units: 2,
-      // `ref_file_id` is injected by the server after resolving `item` (see index.ts), never taken from the client.
+      // `ref_file_id` is a headwear photo the visitor uploaded via /api/file.
       body: (i) => ({
         src_file_id: fileId(i),
         ref_file_id: fileId(i, 'ref_file_id'),
