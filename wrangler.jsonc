@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ahead",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "vars": {
+    // Soft caps for live mode, in YouCam units (the hackathon grant is 1,000).
+    "DAILY_UNITS": "250",
+    "VISITOR_UNITS": "70"
+  },
+  "kv_namespaces": [
+    // Created with `npx wrangler kv namespace create USAGE`; local dev uses a simulated store.
+    { "binding": "USAGE", "id": "local-dev-usage" }
+  ],
+  "observability": { "enabled": true }
+}
