@@ -45,6 +45,8 @@ export function Studio() {
   const [hat, setHat] = useState<Blob>();
   const [styleSet, setStyleSet] = useState<StyleSet>('all');
   const [showBald, setShowBald] = useState(false);
+  const [selected, setSelected] = useState<Look>();
+  const selectedUrl = useImage(selected?.imageKey);
   const hatUrl = useBlobUrl(hat);
   const portrait = useImage(data.portraitKey);
   const resultUrl = useBlobUrl(result?.blob);
@@ -269,6 +271,19 @@ export function Studio() {
         </p>
       )}
       <ErrorNote message={error} />
+      {!result && selected && portrait && selectedUrl && (
+        <section class="card stack" aria-live="polite" id="compare">
+          <h2>{selected.label}</h2>
+          <Compare before={portrait} after={selectedUrl} alt={selected.label} />
+          {selected.details && (
+            <p class="muted small">
+              {Object.entries(selected.details)
+                .map(([k, v]) => `${k}: ${v}`)
+                .join(' · ')}
+            </p>
+          )}
+        </section>
+      )}
       {result && portrait && resultUrl && (
         <section class="card stack" aria-live="polite">
           <h2>{result.label}</h2>
@@ -284,7 +299,20 @@ export function Studio() {
         ) : (
           <div class="looks">
             {data.looks.map((l) => (
-              <LookCard key={l.id} look={l} onFavorite={() => toggleFavorite(l.id)} onRemove={() => removeLook(l.id)} />
+              <LookCard
+                key={l.id}
+                look={l}
+                onOpen={() => {
+                  setResult(undefined);
+                  setSelected(l);
+                  requestAnimationFrame(() => document.getElementById('compare')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+                }}
+                onFavorite={() => toggleFavorite(l.id)}
+                onRemove={() => {
+                  if (selected?.id === l.id) setSelected(undefined);
+                  void removeLook(l.id);
+                }}
+              />
             ))}
           </div>
         )}
@@ -324,11 +352,15 @@ function TemplateGrid({ items, busy, onPick }: { items: HairTemplate[]; busy?: s
   );
 }
 
-function LookCard({ look, onFavorite, onRemove }: { look: Look; onFavorite: () => void; onRemove: () => void }) {
+function LookCard({ look, onOpen, onFavorite, onRemove }: { look: Look; onOpen: () => void; onFavorite: () => void; onRemove: () => void }) {
   const url = useImage(look.imageKey);
   return (
     <figure class="look">
-      {url && <img src={url} alt={look.label} />}
+      {url && (
+        <button class="look-open" onClick={onOpen} aria-label={`Compare ${look.label} with your photo`}>
+          <img src={url} alt="" />
+        </button>
+      )}
       <figcaption>
         <span>{look.label}</span>
         <span class="row" style={{ gap: 0 }}>
