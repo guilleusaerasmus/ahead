@@ -2,6 +2,8 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "ahead",
   "main": "worker/index.ts",
+  "workers_dev": true,
+  "preview_urls": false,
   "compatibility_date": "2025-10-11",
   "assets": {
     "directory": "./dist",
@@ -16,7 +18,7 @@
   },
   "kv_namespaces": [
     // Created with `npx wrangler kv namespace create USAGE`; local dev uses a simulated store.
-    { "binding": "USAGE", "id": "local-dev-usage" }
+    { "binding": "USAGE", "id": "58aa8f19843e4580938c571b7ae256ab" }
   ],
   "observability": { "enabled": true }
 }
