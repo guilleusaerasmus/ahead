@@ -28,7 +28,7 @@ function currentPath(): Path {
 
 function Shell() {
   const [path, setPath] = useState<Path>(currentPath);
-  const { data, ready } = useApp();
+  const { data, ready, wipe } = useApp();
 
   useEffect(() => {
     const onHash = () => {
@@ -78,6 +78,24 @@ function Shell() {
           </nav>
         </div>
       </header>
+      {data.demoNote && (
+        <div class="demo-banner" role="note">
+          <div class="page">
+            <span>
+              <strong>Demo:</strong> {data.demoNote}
+            </span>
+            <button
+              class="btn btn-ghost"
+              onClick={async () => {
+                await wipe();
+                location.hash = '#/';
+              }}
+            >
+              Exit demo
+            </button>
+          </div>
+        </div>
+      )}
       <main id="main" class="page" tabIndex={-1}>
         {ready ? <View /> : <p class="muted">Loading…</p>}
       </main>

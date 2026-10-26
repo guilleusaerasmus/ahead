@@ -1,6 +1,6 @@
 import { useApp, useImage, type Look } from '../state';
 import { Swatch } from '../components';
-import { browPencil, wigDensity, wigLength, SOURCES } from '../lib/guidance';
+import { browPencil, hairShadeName, wigDensity, wigLength, SOURCES } from '../lib/guidance';
 
 export function Plan() {
   const { data } = useApp();
@@ -30,7 +30,7 @@ export function Plan() {
               <>
                 <dt>Colour</dt>
                 <dd>
-                  <Swatch hex={(p.hairSampledHex ?? p.hairHex)!} label="Hair colour" /> {p.hairColorName} ({p.hairSampledHex ?? p.hairHex})
+                  <Swatch hex={(p.hairSampledHex ?? p.hairHex)!} label="Hair colour" /> {p.hairSampledHex ? hairShadeName(p.hairSampledHex) : p.hairColorName} ({p.hairSampledHex ?? p.hairHex})
                 </dd>
               </>
             )}
@@ -43,7 +43,7 @@ export function Plan() {
             {p.densityTerm && (
               <>
                 <dt>Cap density</dt>
-                <dd>{wigDensity(p.densityTerm)}</dd>
+                <dd>{wigDensity(p.density, p.densityTerm)}</dd>
               </>
             )}
             {pencil && (

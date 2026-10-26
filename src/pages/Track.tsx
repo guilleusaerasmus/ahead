@@ -5,7 +5,7 @@ import { analyze, readDensity, readSkin } from '../lib/run';
 import { friendlyError } from '../lib/errors';
 import { prepareCloseUp, prepareHairline } from '../lib/image';
 import * as store from '../lib/store';
-import { CARE_TIPS, CONCERN_LABEL, MEANINGFUL_CHANGE, SOURCES, skinTrends, type CheckIn, type SkinConcern } from '../lib/guidance';
+import { CARE_TIPS, CONCERN_LABEL, DENSITY_MEANINGFUL_CHANGE, MEANINGFUL_CHANGE, SOURCES, skinTrends, type CheckIn, type SkinConcern } from '../lib/guidance';
 
 export function Track() {
   const { data, addCheckIn } = useApp();
@@ -120,6 +120,7 @@ export function Track() {
         ) : (
           <>
             <LineChart points={densityPoints.map((c) => ({ at: c.at, value: c.density! }))} max={3} label="Hair density (0–3)" />
+            <DensityChange first={densityPoints[0].density!} last={densityPoints[densityPoints.length - 1].density!} />
             <p class="muted">
               Many people choose to cut their hair short or shave it once shedding starts; it is often less uncomfortable. You can preview
               a short cut in <a href="#/try">Try options</a>. Source: <a href={SOURCES.hairLoss.url}>{SOURCES.hairLoss.label}</a>.
@@ -175,6 +176,28 @@ export function Track() {
         </div>
       </section>
     </div>
+  );
+}
+
+function DensityChange({ first, last }: { first: number; last: number }) {
+  const change = last - first;
+  const noticeable = Math.abs(change) >= DENSITY_MEANINGFUL_CHANGE;
+  return (
+    <p>
+      <strong>
+        {first.toFixed(2)} → {last.toFixed(2)}
+      </strong>{' '}
+      <span class="muted">
+        ({change > 0 ? '+' : ''}
+        {change.toFixed(2)} since your first check-in;{' '}
+        {noticeable
+          ? change < 0
+            ? 'a clear drop, larger than the normal photo-to-photo variation'
+            : 'a clear rise, larger than the normal photo-to-photo variation'
+          : `within normal photo-to-photo variation (±${DENSITY_MEANINGFUL_CHANGE})`}
+        )
+      </span>
+    </p>
   );
 }
 

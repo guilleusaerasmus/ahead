@@ -27,7 +27,11 @@ const COLORS = [
 ];
 
 /** Short styles are what many people choose before shedding starts; we pick them by title keywords. */
-const SHORT = /pixie|crop|buzz|short|bob|undercut/i;
+const SHORT = /pixie|crop|buzz|short|bob|undercut|crew|taper|fade/i;
+/** Fashion and party looks that no one would ask a wig fitter to match. */
+const NOVELTY = /neon|pink|rainbow|leopard|bow|bun|braid|updo|accent|ombre|balayage|highlight|split|crimp|purple|blue|green|pastel|lavender|violet|steel|mohawk|spike|bald/i;
+const BALD = /^bald$/i;
+type StyleSet = 'all' | 'Female' | 'Male';
 
 export function Studio() {
   const { data, addLook, toggleFavorite, removeLook } = useApp();
@@ -39,6 +43,8 @@ export function Studio() {
   const [result, setResult] = useState<{ blob: Blob; label: string }>();
   const [gender, setGender] = useState<'female' | 'male'>('female');
   const [hat, setHat] = useState<Blob>();
+  const [styleSet, setStyleSet] = useState<StyleSet>('all');
+  const [showBald, setShowBald] = useState(false);
   const hatUrl = useBlobUrl(hat);
   const portrait = useImage(data.portraitKey);
   const resultUrl = useBlobUrl(result?.blob);
@@ -86,7 +92,9 @@ export function Studio() {
       Colour: 'Your own colour',
     });
 
-  const shortOnes = templates.filter((t) => SHORT.test(`${t.title ?? ''} ${t.category_name ?? ''}`));
+  const everyday = templates.filter((t) => !NOVELTY.test(t.title ?? '') && (styleSet === 'all' || t.category_name === styleSet));
+  const shortOnes = everyday.filter((t) => SHORT.test(t.title ?? ''));
+  const bald = templates.find((t) => BALD.test((t.title ?? '').trim()) && (styleSet === 'all' || t.category_name === styleSet)) ?? templates.find((t) => BALD.test((t.title ?? '').trim()));
   const pencil = p?.browHex ? browPencil(p.browHex) : undefined;
   const ownHex = p?.hairSampledHex ?? p?.hairHex;
   const colours = ownHex ? [{ hex: ownHex, label: 'Your colour' }, { hex: mix(ownHex, '#ffffff', 0.15), label: 'Yours, a shade lighter' }, ...COLORS] : COLORS;
@@ -110,7 +118,8 @@ export function Studio() {
           <>
             <p class="muted">Styles keep your own hair colour, so you see how a wig that matches you would look.</p>
             <ErrorNote message={templatesError} />
-            <TemplateGrid items={templates} busy={busy} onPick={(t) => tryTemplate(t, 'wig')} />
+            <StyleFilter value={styleSet} onChange={setStyleSet} />
+            <TemplateGrid items={everyday} busy={busy} onPick={(t) => tryTemplate(t, 'wig')} />
           </>
         )}
         {tab === 'short' && (
@@ -119,7 +128,38 @@ export function Studio() {
               Many people cut their hair short or shave it before it falls out, because shedding is less upsetting and less
               uncomfortable when hair is short. See it first.
             </p>
-            <TemplateGrid items={shortOnes.length ? shortOnes : templates} busy={busy} onPick={(t) => tryTemplate(t, 'short')} />
+            <StyleFilter value={styleSet} onChange={setStyleSet} />
+            <TemplateGrid items={shortOnes.length ? shortOnes : everyday} busy={busy} onPick={(t) => tryTemplate(t, 'short')} />
+            {bald && (
+              <div class="note stack">
+                <strong>Optional: see yourself without hair</strong>
+                <p style={{ margin: 0 }}>
+                  Some people find it easier to see this privately before it happens; others would rather not. It is entirely up to you, and
+                  you can delete the preview afterwards.
+                </p>
+                {showBald ? (
+                  <div>
+                    <button
+                      class="btn btn-ghost"
+                      disabled={Boolean(busy)}
+                      onClick={() =>
+                        run('short', 'Without hair', () => analyze('hairstyle', portraitKey, { template_id: bald.id, hair_color: 'src' }), {
+                          Style: 'Preview without hair',
+                        })
+                      }
+                    >
+                      Create the preview
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <button class="btn btn-ghost" onClick={() => setShowBald(true)}>
+                      I want to see it
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
         {tab === 'color' && (
@@ -141,7 +181,10 @@ export function Studio() {
         )}
         {tab === 'hat' && (
           <>
-            <p class="muted">Soft linings (cotton, bamboo, silk) are kindest to a sensitive scalp.</p>
+            <p class="muted">
+              Soft linings (cotton, bamboo, silk) are kindest to a sensitive scalp. The headwear preview also restyles your outfit and the
+              background, so focus on how the hat sits and its colour next to your face.
+            </p>
             <fieldset class="row" style={{ border: 0, padding: 0, margin: 0 }}>
               <legend class="small muted">The hat tool styles the result as:</legend>
               {(['female', 'male'] as const).map((g) => (
@@ -246,6 +289,23 @@ export function Studio() {
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+function StyleFilter({ value, onChange }: { value: StyleSet; onChange: (v: StyleSet) => void }) {
+  const options: Array<[StyleSet, string]> = [
+    ['all', 'All styles'],
+    ['Female', 'Feminine'],
+    ['Male', 'Masculine'],
+  ];
+  return (
+    <div class="tabs" role="radiogroup" aria-label="Which styles to show" style={{ marginBottom: 0 }}>
+      {options.map(([v, label]) => (
+        <button key={v} role="radio" aria-checked={value === v} aria-selected={value === v} onClick={() => onChange(v)}>
+          {label}
+        </button>
+      ))}
     </div>
   );
 }

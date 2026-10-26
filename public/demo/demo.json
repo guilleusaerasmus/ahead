@@ -1,0 +1,108 @@
+{
+ "persona": "Elena",
+ "note": "Elena is an AI-generated demo persona. Her photos were made with YouCam's AI Image Generator to illustrate three weeks of treatment. Every measurement and preview is a real YouCam API result on those photos.",
+ "photos": {
+  "portrait": "elena-portrait.jpg",
+  "closeup": "elena-closeup.jpg",
+  "hairline": "elena-hairline.jpg"
+ },
+ "profile": {
+  "measuredAt": "2026-10-05T10:00:00.000Z",
+  "hairColorName": "Blonde",
+  "hairHex": "#FAF0BE",
+  "hairSampledHex": "#5c3c24",
+  "browHex": "#805d47",
+  "skinHex": "#b5937a",
+  "eyeColorName": "Brown",
+  "length": "above chest",
+  "density": 2.53,
+  "densityTerm": "High Density"
+ },
+ "checkins": [
+  {
+   "id": "demo-w0",
+   "at": "2026-10-05T10:00:00.000Z",
+   "density": 2.53,
+   "densityTerm": "High Density",
+   "skin": {
+    "redness": 95.8,
+    "texture": 80.9,
+    "radiance": 45.4,
+    "moisture": 35.1
+   },
+   "photo": "elena-hairline.jpg"
+  },
+  {
+   "id": "demo-w3",
+   "at": "2026-10-26T10:00:00.000Z",
+   "density": 1.0,
+   "densityTerm": "Low Density",
+   "skin": {
+    "texture": 58.6,
+    "redness": 24.6,
+    "radiance": 20.3,
+    "moisture": 29.8
+   },
+   "photo": "elena-hairline-week3.jpg"
+  }
+ ],
+ "looks": [
+  {
+   "kind": "wig",
+   "label": "Bobcut Curly",
+   "image": "look-wig-curly.jpg",
+   "favorite": true,
+   "details": {
+    "Style": "Bobcut Curly",
+    "Colour": "Your own colour"
+   }
+  },
+  {
+   "kind": "wig",
+   "label": "Modern Wavy Lob",
+   "image": "look-wig-lob.jpg",
+   "favorite": false,
+   "details": {
+    "Style": "Modern Wavy Lob",
+    "Colour": "Your own colour"
+   }
+  },
+  {
+   "kind": "short",
+   "label": "Pixie",
+   "image": "look-short-pixie.jpg",
+   "favorite": true,
+   "details": {
+    "Style": "Pixie",
+    "Colour": "Your own colour"
+   }
+  },
+  {
+   "kind": "color",
+   "label": "Silver",
+   "image": "look-color-silver.jpg",
+   "favorite": false,
+   "details": {
+    "Colour": "Silver (#9a9a9a)"
+   }
+  },
+  {
+   "kind": "hat",
+   "label": "Your headwear",
+   "image": "look-hat-turban.jpg",
+   "favorite": true,
+   "details": {
+    "Headwear": "Photographed item: cotton jersey turban"
+   }
+  },
+  {
+   "kind": "brows",
+   "label": "Brows: Fuller",
+   "image": "look-brows.jpg",
+   "favorite": true,
+   "details": {
+    "Brow pencil": "Dark brown (#4a3426)"
+   }
+  }
+ ]
+}

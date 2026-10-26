@@ -3,7 +3,7 @@ import { useApp } from '../state';
 import { ErrorNote, Progress, Swatch, type StepState } from '../components';
 import { analyze, readDensity, readLength, readTone } from '../lib/run';
 import { friendlyError } from '../lib/errors';
-import { browPencil, wigDensity, wigLength, SOURCES, type HairProfile } from '../lib/guidance';
+import { browPencil, hairShadeName, wigDensity, wigLength, SOURCES, type HairProfile } from '../lib/guidance';
 import { newId } from '../lib/store';
 import { HairShade } from './HairShade';
 
@@ -91,8 +91,11 @@ export function Today() {
                   <dt>Colour</dt>
                   <dd>
                     <Swatch hex={p.hairSampledHex ?? p.hairHex!} label="Hair colour" />
-                    {p.hairColorName ?? 'Your shade'}
-                    <span class="muted small">{p.hairSampledHex ? `exact shade ${p.hairSampledHex}` : 'colour family; pick your exact shade below'}</span>
+                    {p.hairSampledHex ? hairShadeName(p.hairSampledHex) : 'Tap your hair below to record your exact shade'}
+                    <span class="muted small">
+                      {p.hairSampledHex ? `${p.hairSampledHex}` : ''}
+                      {p.hairColorName ? ` · automatic family: ${p.hairColorName.toLowerCase()}` : ''}
+                    </span>
                   </dd>
                 </>
               )}
@@ -108,7 +111,7 @@ export function Today() {
                 <>
                   <dt>Cap density</dt>
                   <dd>
-                    {wigDensity(p.densityTerm)} <span class="muted small">(measured: {p.densityTerm.toLowerCase()})</span>
+                    {wigDensity(p.density, p.densityTerm)} <span class="muted small">(measured: {p.density !== undefined ? `${p.density.toFixed(2)} of 3, ` : ''}{p.densityTerm.toLowerCase()})</span>
                   </dd>
                 </>
               )}

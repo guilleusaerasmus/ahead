@@ -13,8 +13,8 @@
   },
   "vars": {
     // Soft caps for live mode, in YouCam units (the hackathon grant is 1,000).
-    "DAILY_UNITS": "250",
-    "VISITOR_UNITS": "70"
+    "DAILY_UNITS": "120",
+    "VISITOR_UNITS": "50"
   },
   "kv_namespaces": [
     // Created with `npx wrangler kv namespace create USAGE`; local dev uses a simulated store.

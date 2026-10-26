@@ -28,6 +28,8 @@ export interface AppData {
   profile?: HairProfile;
   looks: Look[];
   checkins: CheckIn[];
+  /** Set when the app shows the built-in demo persona instead of the visitor's own data. */
+  demoNote?: string;
 }
 
 interface Ctx {
@@ -41,6 +43,7 @@ interface Ctx {
   removeLook: (id: string) => Promise<void>;
   addCheckIn: (c: CheckIn) => Promise<void>;
   wipe: () => Promise<void>;
+  loadDemo: () => Promise<void>;
 }
 
 const AppContext = createContext<Ctx | null>(null);
@@ -71,13 +74,20 @@ export function useImage(key?: string): string | undefined {
   return url;
 }
 
+interface DemoFile {
+  note: string;
+  photos: Record<PhotoSlot, string>;
+  profile: HairProfile;
+  checkins: CheckIn[];
+  looks: Array<{ kind: LookKind; label: string; image: string; favorite: boolean; details?: Record<string, string> }>;
+}
+
 export function AppProvider({ children }: { children: ComponentChildren }) {
   const [data, setData] = useState<AppData>({ looks: [], checkins: [] });
   const [ready, setReady] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      const [consentAt, portraitKey, closeupKey, hairlineKey, profile, looks, checkins] = await Promise.all([
+  const load = useCallback(async () => {
+      const [consentAt, portraitKey, closeupKey, hairlineKey, profile, looks, checkins, demoNote] = await Promise.all([
         store.get<string>('kv', 'consentAt'),
         store.get<string>('kv', 'portraitKey'),
         store.get<string>('kv', 'closeupKey'),
@@ -85,11 +95,14 @@ export function AppProvider({ children }: { children: ComponentChildren }) {
         store.get<HairProfile>('kv', 'profile'),
         store.get<Look[]>('kv', 'looks'),
         store.all<CheckIn>('checkins'),
+        store.get<string>('kv', 'demoNote'),
       ]);
-      setData({ consentAt, portraitKey, closeupKey, hairlineKey, profile, looks: looks ?? [], checkins: checkins.sort((a, b) => a.at.localeCompare(b.at)) });
-      setReady(true);
-    })().catch(() => setReady(true));
+      setData({ consentAt, portraitKey, closeupKey, hairlineKey, profile, looks: looks ?? [], checkins: checkins.sort((a, b) => a.at.localeCompare(b.at)), demoNote });
   }, []);
+
+  useEffect(() => {
+    load().finally(() => setReady(true));
+  }, [load]);
 
   const setConsent = useCallback(async () => {
     const at = new Date().toISOString();
@@ -150,9 +163,44 @@ export function AppProvider({ children }: { children: ComponentChildren }) {
     setData({ looks: [], checkins: [] });
   }, []);
 
+  /**
+   * Replaces whatever is on this device with the demo persona: real YouCam results computed on
+   * AI-generated photos, shipped as static files, so trying the app costs no API units.
+   */
+  const loadDemo = useCallback(async () => {
+    const res = await fetch('/demo/demo.json');
+    if (!res.ok) throw new Error('demo_missing');
+    const demo = (await res.json()) as DemoFile;
+    const image = async (name: string) => {
+      const r = await fetch(`/demo/${name}`);
+      if (!r.ok) throw new Error('demo_image_missing');
+      return r.blob();
+    };
+    await store.wipeAll();
+    for (const [slot, name] of Object.entries(demo.photos)) {
+      const key = `${slot}-demo`;
+      await store.put('images', key, await image(name));
+      await store.put('kv', `${slot}Key`, key);
+    }
+    const looks: Look[] = [];
+    for (const [i, l] of demo.looks.entries()) {
+      const imageKey = `look-demo-${i}`;
+      await store.put('images', imageKey, await image(l.image));
+      looks.push({ id: `demo-${i}`, kind: l.kind, label: l.label, imageKey, at: demo.profile.measuredAt, favorite: l.favorite, details: l.details });
+    }
+    for (const c of demo.checkins) await store.put('checkins', c.id, { id: c.id, at: c.at, density: c.density, densityTerm: c.densityTerm, skin: c.skin });
+    await Promise.all([
+      store.put('kv', 'looks', looks),
+      store.put('kv', 'profile', demo.profile),
+      store.put('kv', 'consentAt', new Date().toISOString()),
+      store.put('kv', 'demoNote', demo.note),
+    ]);
+    await load();
+  }, [load]);
+
   const value = useMemo(
-    () => ({ data, ready, setConsent, savePhoto, saveProfile, addLook, toggleFavorite, removeLook, addCheckIn, wipe }),
-    [data, ready, setConsent, savePhoto, saveProfile, addLook, toggleFavorite, removeLook, addCheckIn, wipe],
+    () => ({ data, ready, setConsent, savePhoto, saveProfile, addLook, toggleFavorite, removeLook, addCheckIn, wipe, loadDemo }),
+    [data, ready, setConsent, savePhoto, saveProfile, addLook, toggleFavorite, removeLook, addCheckIn, wipe, loadDemo],
   );
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

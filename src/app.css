@@ -507,3 +507,24 @@
 #main:focus {
   outline: none;
 }
+
+.demo-banner {
+  background: var(--warn-soft);
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+  font-size: 0.92rem;
+}
+
+.demo-banner .page {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.demo-banner .btn {
+  min-height: 40px;
+}

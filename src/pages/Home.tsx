@@ -1,8 +1,23 @@
+import { useState } from 'preact/hooks';
 import { useApp } from '../state';
 import { SOURCES } from '../lib/guidance';
 
 export function Home() {
-  const { data } = useApp();
+  const { data, loadDemo } = useApp();
+  const [loading, setLoading] = useState(false);
+  const [demoError, setDemoError] = useState(false);
+  const tryDemo = async () => {
+    setLoading(true);
+    setDemoError(false);
+    try {
+      await loadDemo();
+      location.hash = '#/today';
+    } catch {
+      setDemoError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
   const started = Boolean(data.consentAt && data.portraitKey && data.closeupKey && data.hairlineKey);
   return (
     <div class="stack">
@@ -18,10 +33,15 @@ export function Home() {
           <a class="btn btn-primary" href={started ? '#/today' : '#/start'}>
             {started ? 'Continue' : 'Get started'}
           </a>
-          <a class="btn btn-ghost" href="#/privacy">
-            How your photos are handled
-          </a>
+          <button class="btn btn-ghost" onClick={tryDemo} disabled={loading}>
+            {loading ? 'Loading Elena…' : 'See it with a demo persona'}
+          </button>
         </div>
+        {demoError && <p class="note note-warn">The demo could not be loaded. Please try again.</p>}
+        <p class="muted small" style={{ marginTop: '12px' }}>
+          The demo shows Elena, an AI-generated persona, with real YouCam results. It replaces anything stored on this device and uses no
+          photos of you. <a href="#/privacy">How your photos are handled</a>.
+        </p>
         <p class="muted small" style={{ marginTop: '12px' }}>
           Timing from the <a href={SOURCES.hairLoss.url}>{SOURCES.hairLoss.label}</a>.
         </p>
