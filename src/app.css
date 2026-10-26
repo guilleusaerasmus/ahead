@@ -355,6 +355,9 @@
 }
 
 .compare {
+  max-width: 440px;
+  width: 100%;
+  margin: 0 auto;
   position: relative;
   border-radius: var(--radius);
   overflow: hidden;
