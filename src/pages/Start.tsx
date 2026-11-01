@@ -32,7 +32,7 @@ export function Start() {
       <div class="stack" style={{ maxWidth: '680px' }}>
         <p class="eyebrow">Before we start</p>
         <h1>Your photos, your choice</h1>
-        <p class="lede">Ahead needs two photos of you. Here is exactly what happens to them.</p>
+        <p class="lede">Ahead needs three photos of you. Here is exactly what happens to them.</p>
         <ul>
           <li>
             Each photo is sent to the <strong>YouCam API</strong> (Perfect Corp) only to be analysed or to create a preview.

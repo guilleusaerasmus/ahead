@@ -75,7 +75,7 @@ export function Today() {
           <button class="btn btn-primary" onClick={measure} disabled={running}>
             {running ? 'Measuring…' : 'Measure my hair'}
           </button>
-          <p class="muted small">Takes about a minute. Uses your two photos.</p>
+          <p class="muted small">Takes about a minute. Uses your three photos.</p>
         </div>
       )}
       <ErrorNote message={error} />

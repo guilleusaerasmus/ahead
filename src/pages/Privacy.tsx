@@ -28,7 +28,7 @@ export function Privacy() {
         </div>
         <div>
           <h3>Stored only on this device</h3>
-          <p class="muted">Your two photos, your previews and your check-ins are stored in this browser. Clearing it deletes them.</p>
+          <p class="muted">Your three photos, your previews and your check-ins are stored in this browser. Clearing it deletes them.</p>
         </div>
         <div>
           <h3>Who it is for</h3>

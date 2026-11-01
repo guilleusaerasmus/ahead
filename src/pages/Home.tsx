@@ -52,7 +52,7 @@ export function Home() {
           <p class="eyebrow">1 · Before</p>
           <h3>Your hair, on a card</h3>
           <p class="muted">
-            Colour, length and density measured from two photos, translated into what a wig fitter asks for: shade, length and cap
+            Colour, length and density measured from three photos, translated into what a wig fitter asks for: shade, length and cap
             density. Plus the brow pencil shade that matches you.
           </p>
         </article>
